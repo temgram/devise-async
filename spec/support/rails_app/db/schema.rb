@@ -2,7 +2,7 @@ ActiveRecord::Schema.define(:version => 1) do
   begin
     drop_table :users
     drop_rable :delayed_jobs
-  rescue Exception => e
+  rescue
   end
 
   create_table "users", :force => true do |t|

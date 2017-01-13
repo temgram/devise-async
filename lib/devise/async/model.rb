@@ -27,53 +27,27 @@ module Devise
       def send_devise_notification(notification, *args)
         return super unless Devise::Async.enabled
 
-        # The current locale has to be remembered until the actual sending
-        # of an email because it is scoped to the current thread. Hence,
-        # using asynchronous mechanisms that use another thread to send an
-        # email the currently used locale will be gone later.
-        args = args_with_current_locale(args)
+        binding.pry
 
-        # If the record is dirty we keep pending notifications to be enqueued
-        # by the callback and avoid before commit job processing.
-        if changed?
-          devise_pending_notifications << [ notification, args ]
-        # If the record isn't dirty (aka has already been saved) enqueue right away
-        # because the callback has already been triggered.
+        if new_record? || changed?
+          devise_pending_notifications << [notification, args]
         else
-          Devise::Async::Worker.enqueue(notification, self.class.name, self.id.to_s, *args)
+          devise_mailer.send(notification, self, *args).deliver_later
         end
       end
 
       # Send all pending notifications.
       def send_devise_pending_notifications
         devise_pending_notifications.each do |notification, args|
-          # Use `id.to_s` to avoid problems with mongoid 2.4.X ids being serialized
-          # wrong with YAJL.
-          Devise::Async::Worker.enqueue(notification, self.class.name, self.id.to_s, *args)
+          devise_mailer.send(notification, self, *args).deliver_later
         end
-        @devise_pending_notifications = []
+
+        @devise_pending_notifications.clear
       end
 
       def devise_pending_notifications
         @devise_pending_notifications ||= []
       end
-
-      private
-
-      def args_with_current_locale(args)
-        # The default_locale is taken in any case. Hence, the args do not have
-        # to be adapted if default_locale and current locale are equal.
-        args = add_current_locale_to_args(args) if I18n.locale != I18n.default_locale
-        args
-      end
-
-      def add_current_locale_to_args(args)
-        # Devise expects a hash as the last parameter for Mailer methods.
-        opts = args.last.is_a?(Hash) ? args.pop : {}
-        opts['locale'] = I18n.locale
-        args.push(opts)
-      end
-
     end
   end
 end
