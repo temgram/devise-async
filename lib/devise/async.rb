@@ -1,12 +1,9 @@
 require 'devise'
-require 'active_support/dependencies'
 require 'devise/async/model'
 require 'devise/async/version'
 
 module Devise
   module Async
-    # autoload :Model,   'devise/async/model'
-
     # Defines the enabled configuration that if set to false the emails will be sent synchronously
     mattr_accessor :enabled
     @@enabled = true

@@ -1,7 +1,5 @@
 ENV['RAILS_ENV'] ||= 'test'
 
-require 'action_controller'
-
 require 'devise'
 require 'devise/async'
 require 'rails/all'
@@ -12,7 +10,6 @@ require 'pry'
 
 require 'support/rails_app'
 require 'support/test_helpers'
-require 'support/my_mailer'
 
 RSpec.configure do |config|
   config.infer_spec_type_from_file_location!
@@ -20,9 +17,7 @@ RSpec.configure do |config|
 
   config.include TestHelpers
 
-  config.before :suite do
+  config.before :each do
     load File.dirname(__FILE__) + '/support/rails_app/db/schema.rb'
   end
 end
-
-I18n.enforce_available_locales = false

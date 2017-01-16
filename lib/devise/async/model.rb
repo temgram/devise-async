@@ -27,19 +27,17 @@ module Devise
       def send_devise_notification(notification, *args)
         return super unless Devise::Async.enabled
 
-        binding.pry
-
         if new_record? || changed?
           devise_pending_notifications << [notification, args]
         else
-          devise_mailer.send(notification, self, *args).deliver_later
+          deliver_mail_later(notification, self, args)
         end
       end
 
       # Send all pending notifications.
       def send_devise_pending_notifications
         devise_pending_notifications.each do |notification, args|
-          devise_mailer.send(notification, self, *args).deliver_later
+          deliver_mail_later(notification, self, args)
         end
 
         @devise_pending_notifications.clear
@@ -47,6 +45,12 @@ module Devise
 
       def devise_pending_notifications
         @devise_pending_notifications ||= []
+      end
+
+      private
+
+      def deliver_mail_later(notification, model, args)
+        devise_mailer.send(notification, model, *args).deliver_later
       end
     end
   end
